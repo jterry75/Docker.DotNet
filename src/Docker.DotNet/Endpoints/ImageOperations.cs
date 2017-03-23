@@ -108,16 +108,6 @@ namespace Docker.DotNet
             return this._client.JsonSerializer.DeserializeObject<ImageSearchResponse[]>(response.Body);
         }
 
-        public Task<Stream> CreateImageAsync(ImagesCreateParameters parameters, AuthConfig authConfig)
-        {
-            if (parameters == null)
-            {
-                throw new ArgumentNullException(nameof(parameters));
-            }
-
-            return PullImageAsync(new ImagesPullParameters() { All = false, Parent = parameters.Parent, RegistryAuth = parameters.RegistryAuth }, authConfig);
-        }
-
         public Task CreateImageAsync(ImagesCreateParameters parameters, AuthConfig authConfig, IProgress<JSONMessage> progress, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (parameters == null)
@@ -125,24 +115,10 @@ namespace Docker.DotNet
                 throw new ArgumentNullException(nameof(parameters));
             }
 
-            return PullImageAsync(new ImagesPullParameters() { All = false, Parent = parameters.Parent, RegistryAuth = parameters.RegistryAuth }, authConfig, progress, cancellationToken);
-        }
+            IQueryString queryParameters = new QueryString<ImagesCreateParameters>(parameters);
 
-        public Task<Stream> PullImageAsync(ImagesPullParameters parameters, AuthConfig authConfig)
-        {
-            if (parameters == null)
-            {
-                throw new ArgumentNullException(nameof(parameters));
-            }
-
-            IQueryString queryParameters = new QueryString<ImagesPullParameters>(parameters);
-            return this._client.MakeRequestForStreamAsync(this._client.NoErrorHandlers, HttpMethod.Post, "images/create", queryParameters, null, RegistryAuthHeaders(authConfig), CancellationToken.None);
-        }
-
-        public Task PullImageAsync(ImagesPullParameters parameters, AuthConfig authConfig, IProgress<JSONMessage> progress, CancellationToken cancellationToken = default(CancellationToken))
-        {
             return StreamUtil.MonitorStreamForMessagesAsync(
-                PullImageAsync(parameters, authConfig),
+                this._client.MakeRequestForStreamAsync(this._client.NoErrorHandlers, HttpMethod.Post, "images/create", queryParameters, null, RegistryAuthHeaders(authConfig), cancellationToken),
                 this._client,
                 cancellationToken,
                 progress);
