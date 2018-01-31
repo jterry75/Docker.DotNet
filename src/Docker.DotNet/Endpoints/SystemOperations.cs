@@ -68,5 +68,21 @@ namespace Docker.DotNet
                 cancellationToken,
                 progress);
         }
+
+        Task ISystemOperations.PruneAllAsync(CancellationToken cancellationToken)
+        {
+            return ((ISystemOperations)this).PruneAllAsync(null, null, null, cancellationToken);
+        }
+
+        async Task ISystemOperations.PruneAllAsync(
+            ContainersPruneParameters containerParameters,
+            ImagesPruneParameters imageParameters,
+            NetworksDeleteUnusedParameters networkParameters,
+            CancellationToken cancellationToken)
+        {
+            await this._client.Containers.PruneContainersAsync(containerParameters, cancellationToken);
+            await this._client.Images.PruneImagesAsync(imageParameters, cancellationToken);
+            await this._client.Networks.PruneNetworksAsync(networkParameters, cancellationToken);
+        }
     }
 }
